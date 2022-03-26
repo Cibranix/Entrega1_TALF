@@ -5,12 +5,19 @@ int linea=1;
 %}
 
 IDENTIFICADOR ([A-Za-z][A-Za-z_]*(("_")+[0-9]+)*)+
-ESCAPE (\' | \" | \\ | \a | \b | \f | \n | \r | \t | \v)
 DECIMAL [0-9]+
-OCTAL ["\O"|"\o"][0-7]+
-HEXADECIMAL \[Hh][0-9A-Fa-f]+
+OCTAL ("\O"|"\o")[0-7]+
+HEXADECIMAL ("\H"|"\h")[0-9A-Fa-f]+
 
+DELIMITADORES ("{" | "}" | "(" | ")" | "[" | "]" | "|" | ":" | ";" | "," | "->" | "..")
+C_ESCAPADOS (\\' | \\\" | \\\\ | \\a | \\b | \\f | \\n | \\r | \\t | \\v)
+COMENTARIOS_UNA_LINEA (\/\/.*\n)
+COMENTARIOS_MULTILINEA (\/\*)
+CONSTANTE_CADENA ([^\\\n"]*|{C_ESCAPADOS}|\\[0-3]?[0-7]{1,2}|\\x[0-9a-fA-f]{1,2})
+CARACTER []
 %%
+
+\n linea++;
 
 (?i:abstract)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(ABSTRACT);
 (?i:array)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(ARRAY);
@@ -60,8 +67,18 @@ HEXADECIMAL \[Hh][0-9A-Fa-f]+
 (?i:when)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(WHEN);
 (?i:while)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(WHILE);
 
+{COMENTARIOS_UNA_LINEA} linea++;
 {IDENTIFICADOR} printf("Linea %d - Identificador: %s\n", linea, yytext);return(IDENTIFICADOR);
 
+{COMENTARIOS_MULTILINEA}	BEGIN(COMENTARIO);
+<COMENTARIO>\n			linea++;
+<COMENTARIO>.			;
+<COMENTARIO>\*\/		BEGIN 0;
+
+\"		BEGIN(CADENA);strcat(cadena, yytext);
+<CADENA>\\\n			i++;linea++;strcat(cadena, yytext);
+<CADENA>\"	BEGIN 0;strcat(cadena, yytext); printf("\nlinea %d, constante cadena: %s", linea-i, cadena);i=0;strcpy(cadena,"");
+<CADENA>{CONSTANTE_CADENA}		strcat(cadena,yytext);
 
 [\(#)\{#\}:;,\|]	      printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
 .                                        printf ("linea %d - ERROR\n",linea);
