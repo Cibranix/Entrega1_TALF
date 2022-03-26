@@ -17,12 +17,10 @@ C_ESCAPADOS (\\' | \\\" | \\\\ | \\a | \\b | \\f | \\n | \\r | \\t | \\v)
 
 CONSTANTE_CADENA ([^\\\n"]*|{C_ESCAPADOS}|\\[0-3]?[0-7]{1,2}|\\x[0-9a-fA-f]{1,2})
 
-OPERADORES_ARITMETICOS ([+-*%] | "**")
+OPERADORES_ARITMETICOS [+-*%]
 OPERADORES_BITS ("@" | "&")
-OPERADORES_RELACIONALES ([<>]|"<="|">="|"="|"/=")
+OPERADORES_RELACIONALES ([<>] | "=")
 OPERADORES_LOGICOS ((?i:not) | (?i:and) | (?i:or))
-OPERADORES_ASIGNACION (":=")
-OPERADORES_ACCESO_MEMORIA (".")
 
 COMENTARIOS_UNA_LINEA ("--".*\n)
 COMENTARIOS_MULTILINEA ("//"[(.*)\\n]"\\")
@@ -85,15 +83,22 @@ COMENTARIOS_MULTILINEA ("//"[(.*)\\n]"\\")
 {COMENTARIOS_UNA_LINEA} linea++;
 
 {IDENTIFICADOR} printf("Linea %d - Identificador: %s\n", linea, yytext);return(IDENTIFICADOR);
-{DELIMITADORES} printf("Linea %d - Delimitador: %s\n",linea,yytext);
-{OPERADORES_ARITMETICOS} printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);
-{OPERADORES_BITS} printf("Linea %d - Operador de bits: %s\n",linea,yytext);
-{OPERADORES_RELACIONALES} printf("Linea %d - Operador relacional: %s\n",linea,yytext);
-{OPERADORES_LOGICOS} printf("Linea %d - Operador logico: %s\n",linea,yytext);
-{OPERADORES_ASIGNACION} printf("Linea %d - Operador asignacion: %s\n",linea,yytext);
-{OPERADORES_ACCESO_MEMORIA} printf("Linea %d - Operador de acceso a memoria: %s\n",linea,yytext);
+{DELIMITADORES} printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_ARITMETICOS} printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_BITS} printf("Linea %d - Operador de bits: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_RELACIONALES} printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_LOGICOS} printf("Linea %d - Operador logico: %s\n",linea,yytext);return(yytext[0]);
+(\.) printf("Linea %d - Operador de acceso a memoria: %s\n",linea,yytext);return(yytext[0]);
 
-.               printf ("linea %d - Error: %s\n",linea,yytext);return(yytext[0]);
+(\-\>) printf("Linea %d - Operador: %s\n",linea,yytext);return(FLECHA);
+(\.\.) printf("Linea %d - Operador: %s\n",linea,yytext);return(DOS_PTOS);
+(:=) printf("Linea %d - Operador asignacion: %s\n",linea,yytext);return(ASIG);
+(\*\*) printf("Linea %d - Operador: %s\n",linea,yytext);return(EXP);
+(\/=) printf("Linea %d - Operador: %s\n",linea,yytext);return(DISTINTO);
+(\>=) printf("Linea %d - Operador: %s\n",linea,yytext);return(MAYOR_IGUAL);
+(\<=) printf("Linea %d - Operador: %s\n",linea,yytext);return(MENOR_IGUAL);
+
+.               printf ("linea %d - Error: %s\n",linea,yytext);
 
 %%
 
