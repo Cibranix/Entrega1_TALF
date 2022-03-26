@@ -17,7 +17,6 @@ C_ESCAPADOS (\\' | \\\" | \\\\ | \\a | \\b | \\f | \\n | \\r | \\t | \\v)
 COMENTARIOS_UNA_LINEA ("--".*\n)
 COMENTARIOS_MULTILINEA ("//"[(.*)\\n]"\\")
 CONSTANTE_CADENA ([^\\\n"]*|{C_ESCAPADOS}|\\[0-3]?[0-7]{1,2}|\\x[0-9a-fA-f]{1,2})
-CARACTER []
 
 OPERADORES_ARITMETICOS ([+-*%] | "**")
 OPERADORES_BITS [@&]
