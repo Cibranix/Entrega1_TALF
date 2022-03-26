@@ -14,10 +14,23 @@ HEXADECIMAL ("\H"|"\h")[0-9A-Fa-f]+
 
 DELIMITADORES ("{" | "}" | "(" | ")" | "[" | "]" | "|" | ":" | ";" | "," | "->" | "..")
 C_ESCAPADOS (\\' | \\\" | \\\\ | \\a | \\b | \\f | \\n | \\r | \\t | \\v)
-COMENTARIOS_UNA_LINEA (\/\/.*\n)
-COMENTARIOS_MULTILINEA (\/\*)
+COMENTARIOS_UNA_LINEA ("--".*\n)
+COMENTARIOS_MULTILINEA ("//"[(.*)\\n]"\\")
 CONSTANTE_CADENA ([^\\\n"]*|{C_ESCAPADOS}|\\[0-3]?[0-7]{1,2}|\\x[0-9a-fA-f]{1,2})
 CARACTER []
+
+OPERADORES_ARITMETICOS ([+-*%] | "**")
+OPERADORES_BITS [@&]
+OPERADORES_RELACIONALES ([<>]|"<="|">="|"="|"/=")
+OPERADORES_LOGICOS ((?i:not) | (?i:and) | (?i:or))
+OPERADORES_ASIGNACION (":=")
+OPERADORES_ACCESO_MEMORIA (".")
+
+
+
+
+
+
 %%
 
 \n linea++;
@@ -71,7 +84,15 @@ CARACTER []
 (?i:while)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(WHILE);
 
 {COMENTARIOS_UNA_LINEA} linea++;
+
 {IDENTIFICADOR} printf("Linea %d - Identificador: %s\n", linea, yytext);return(IDENTIFICADOR);
+{DELIMITADORES} printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_ARITMETICOS} printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_BITS} printf("Linea %d - Operador de bits: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_RELACIONALES} printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_LOGICOS} printf("Linea %d - Operador logico: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_ASIGNACION} printf("Linea %d - Operador asignacion: %s\n",linea,yytext);return(yytext[0]);
+{OPERADORES_ACCESO_MEMORIA} printf("Linea %d - Operador de acceso a memoria: %s\n",linea,yytext);return(yytext[0]);
 
 {COMENTARIOS_MULTILINEA}	BEGIN(COMENTARIO);
 <COMENTARIO>\n			linea++;
@@ -83,8 +104,7 @@ CARACTER []
 <CADENA>\"	BEGIN 0;strcat(cadena, yytext); printf("\nlinea %d, constante cadena: %s", linea-i, cadena);i=0;strcpy(cadena,"");
 <CADENA>{CONSTANTE_CADENA}		strcat(cadena,yytext);
 
-{DELIMITADORES} printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
-.                                        printf ("linea %d - ERROR\n",linea);
+.               printf ("linea %d - Error: %s\n",linea,yytext);return(yytext[0]);
 
 %%
 
