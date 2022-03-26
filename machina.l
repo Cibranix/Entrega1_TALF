@@ -4,6 +4,9 @@
 int linea=1; 
 %}
 
+%x COMENTARIO
+%x CADENA
+
 IDENTIFICADOR ([A-Za-z][A-Za-z_]*(("_")+[0-9]+)*)+
 DECIMAL [0-9]+
 OCTAL ("\O"|"\o")[0-7]+
@@ -80,7 +83,7 @@ CARACTER []
 <CADENA>\"	BEGIN 0;strcat(cadena, yytext); printf("\nlinea %d, constante cadena: %s", linea-i, cadena);i=0;strcpy(cadena,"");
 <CADENA>{CONSTANTE_CADENA}		strcat(cadena,yytext);
 
-[\(#)\{#\}:;,\|]	      printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
+{DELIMITADORES} printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
 .                                        printf ("linea %d - ERROR\n",linea);
 
 %%
