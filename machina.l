@@ -1,32 +1,34 @@
-%{
 #include <stdio.h>
 #include "tokens.h"
-int linea=1; 
+int linea=1;
+int i = 0;
+char cadena[256] = "";  
 %}
 
 %x COMENTARIO
 %x CADENA
 
 IDENTIFICADOR ([A-Za-z][A-Za-z_]*(("_")+[0-9]+)*)+
-DECIMAL [0-9]+
-OCTAL ("\O"|"\o")[0-7]+
-HEXADECIMAL ("\H"|"\h")[0-9A-Fa-f]+
 
-DELIMITADORES ("{" | "}" | "(" | ")" | "[" | "]" | "|" | ":" | ";" | "," | "->" | "..")
-C_ESCAPADOS (\\' | \\\" | \\\\ | \\a | \\b | \\f | \\n | \\r | \\t | \\v)
+DECIMAL [+-]?[0-9]+
+OCTAL [+-]?("\\O"|"\\o")[0-7]+
+HEXADECIMAL [+-]?("\\H"|"\\h")[0-9A-Fa-f]+
+REALES (({DECIMAL}|{OCTAL}|{HEXADECIMAL})?\.({DECIMAL}|{OCTAL}|{HEXADECIMAL}))
+EXPONENTES (({DECIMAL}|{OCTAL}|{HEXADECIMAL}|{REALES})^({DECIMAL}|{OCTAL}|{HEXADECIMAL}))
 
-CONSTANTE_CADENA ([^\\\n"]*|{C_ESCAPADOS}|\\[0-3]?[0-7]{1,2}|\\x[0-9a-fA-f]{1,2})
+DELIMITADORES ("{"|"}"|"("|")"|"["|"]"|"|"|":"|";"|",")
+CTE_ESCAPADOS (\\' | \\\" | \\\\ | \\a | \\b | \\f | \\n | \\r | \\t | \\v)
 
-OPERADORES_ARITMETICOS [+-*%]
-OPERADORES_BITS ("@" | "&")
-OPERADORES_RELACIONALES ([<>] | "=")
-OPERADORES_LOGICOS ((?i:not) | (?i:and) | (?i:or))
+CARACTER_DECIMAL \\(([01]?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5]))
+CTE_CADENA ([^\\\n"]*|{CTE_ESCAPADOS}|{CARACTER_DECIMAL}|("\\O"|"\\o")[0-3]?[0-7]{1,2}|("\\H"|"\\h")[0-9a-fA-f]{1,2})
+CTE_CARACTER '([^\\'\n]|{CTE_ESCAPADOS}|{CARACTER_DECIMAL}|("\\O"|"\\o")[0-3]?[0-7]{1,2}|("\\H"|"\\h")[0-9a-fA-f]{1,2})'
+
+ARITMETICOS ("+"|"-"|"*"|"%")
+BITS (\@|\&)
+RELACIONALES ([<>]|\=)
 
 COMENTARIOS_UNA_LINEA ("--".*\n)
-COMENTARIOS_MULTILINEA ("//"[(.*)\\n]"\\")
-
-
-
+COMENTARIOS_MULTILINEA (\/\/)
 
 %%
 
@@ -79,26 +81,45 @@ COMENTARIOS_MULTILINEA ("//"[(.*)\\n]"\\")
 (?i:start)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(START);
 (?i:when)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(WHEN);
 (?i:while)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(WHILE);
+(?i:not) printf("Linea %d - Operador logico: %s\n",linea,yytext);return(NOT);
+(?i:and) printf("Linea %d - Operador logico: %s\n",linea,yytext);return(AND);
+(?i:or) printf("Linea %d - Operador logico: %s\n",linea,yytext);return(OR);
+(?i:mod) printf("Linea %d - Operador logico: %s\n",linea,yytext);return(MOD);
 
 {COMENTARIOS_UNA_LINEA} linea++;
-
 {IDENTIFICADOR} printf("Linea %d - Identificador: %s\n", linea, yytext);return(IDENTIFICADOR);
 {DELIMITADORES} printf("Linea %d - Delimitador: %s\n",linea,yytext);return(yytext[0]);
-{OPERADORES_ARITMETICOS} printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);return(yytext[0]);
-{OPERADORES_BITS} printf("Linea %d - Operador de bits: %s\n",linea,yytext);return(yytext[0]);
-{OPERADORES_RELACIONALES} printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(yytext[0]);
-{OPERADORES_LOGICOS} printf("Linea %d - Operador logico: %s\n",linea,yytext);return(yytext[0]);
+{DECIMAL} printf("Linea %d - Constante Entera Decimal: %s\n", linea, yytext);return(CTC_INT);
+{OCTAL} printf("Linea %d - Constante Entera Octal: %s\n", linea, yytext);return(CTC_INT);
+{HEXADECIMAL} printf("Linea %d - Constante Entera Hexadecimal: %s\n", linea, yytext);return(CTC_INT);
+{REALES} printf("Linea %d - Constante Real: %s\n", linea, yytext);return(CTC_FLOAT);
+{EXPONENTES} printf("Linea %d - Constante Real Exponente: %s\n", linea, yytext);return(CTC_FLOAT);
+{BITS} printf("Linea %d - Operador de bits: %s\n",linea,yytext);return(yytext[0]);
+{ARITMETICOS} printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);return(yytext[0]);
+{RELACIONALES} printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(yytext[0]);
+
 (\.) printf("Linea %d - Operador de acceso a memoria: %s\n",linea,yytext);return(yytext[0]);
 
-(\-\>) printf("Linea %d - Operador: %s\n",linea,yytext);return(FLECHA);
-(\.\.) printf("Linea %d - Operador: %s\n",linea,yytext);return(DOS_PTOS);
+(\-\>) printf("Linea %d - Delimitador: %s\n",linea,yytext);return(FLECHA);
+(\.\.) printf("Linea %d - Delimitador: %s\n",linea,yytext);return(DOS_PTOS);
 (:=) printf("Linea %d - Operador asignacion: %s\n",linea,yytext);return(ASIG);
-(\*\*) printf("Linea %d - Operador: %s\n",linea,yytext);return(EXP);
-(\/=) printf("Linea %d - Operador: %s\n",linea,yytext);return(DISTINTO);
-(\>=) printf("Linea %d - Operador: %s\n",linea,yytext);return(MAYOR_IGUAL);
-(\<=) printf("Linea %d - Operador: %s\n",linea,yytext);return(MENOR_IGUAL);
+(\*\*) printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);return(EXP);
+(\/=) printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(DISTINTO);
+(\>=) printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(MAYOR_IGUAL);
+(\<=) printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(MENOR_IGUAL);
 
-.               printf ("linea %d - Error: %s\n",linea,yytext);
+{COMENTARIOS_MULTILINEA}	BEGIN(COMENTARIO);
+<COMENTARIO>\n			linea++;
+<COMENTARIO>.			;
+<COMENTARIO>\\\\		BEGIN 0;
+
+\"		BEGIN(CADENA);strcat(cadena, yytext);
+<CADENA>\\\n			i++;linea++;strcat(cadena, yytext);
+<CADENA>\"	BEGIN 0;strcat(cadena, yytext); printf("\nlinea %d, constante cadena: %s", linea-i, cadena);i=0;strcpy(cadena,"");
+<CADENA>{CTE_CADENA}		strcat(cadena,yytext);
+
+(" ")
+. printf ("Linea %d - Error: %s\n",linea,yytext);
 
 %%
 
