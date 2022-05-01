@@ -1,4 +1,4 @@
-%{
+{
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,12 +11,12 @@ char cadena[256] = "";
 %x COMENTARIO
 %x CADENA
 
-IDENTIFICADOR ([A-Za-z][A-Za-z_]*(("_")+[0-9]+)*)+
-DECIMAL ([+-]?[0-9]+)
-OCTAL ([+-]?("\\O"|"\\o")[0-7]+)
-HEXADECIMAL ([+-]?("\\H"|"\\h")[0-9A-Fa-f]+)
-REALES (({DECIMAL}|{OCTAL}|{HEXADECIMAL})?\.({DECIMAL}|{OCTAL}|{HEXADECIMAL}))
-EXPONENTES (({DECIMAL}|{OCTAL}|{HEXADECIMAL}|{REALES})^({DECIMAL}|{OCTAL}|{HEXADECIMAL}))
+IDENTIFICADOR [A-Za-z]([A-Za-z]|_[0-9]*)*
+DECIMAL ([0-9]+)
+OCTAL ((\\O|\\o)[0-7]+)
+HEXADECIMAL (("\\H"|"\\h")[0-9A-Fa-f]+)
+REALES (({DECIMAL}|{OCTAL}|{HEXADECIMAL})\.({DECIMAL}|{OCTAL}|{HEXADECIMAL}))
+EXPONENTES (({DECIMAL}|{OCTAL}|{HEXADECIMAL}|{REALES})^[+-]?({DECIMAL}|{OCTAL}|{HEXADECIMAL}))
 DELIMITADORES ("{"|"}"|"("|")"|"["|"]"|"|"|":"|";"|",")
 CTE_ESCAPADOS (\\'|\\\"|\\\\|\\a|\\b|\\f|\\n|\\r|\\t|\\v)
 CARACTER_DECIMAL \\(([01]?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5]))
@@ -28,13 +28,9 @@ RELACIONALES ([<>]|\=)
 COMENTARIOS_UNA_LINEA ("--".*\n)
 COMENTARIOS_MULTILINEA (\/\/)
 
-NO_IDENT (([A-Za-z]+[0-9]+)+)|(_[A-Za-z0-9]+)|([0-9]+[A-Za-z_]+[A-Za-z_0-9]*)
-NO_CHAR ('.+')
-NO_NUM \\([0-9A-Za-z]+)
-
 %%
-(" ")
-("\t")
+" "   ;
+\t    ;
 \n linea++;
 
 (?i:abstract)  printf("Linea %d - Palabra Reservada: %s\n", linea, yytext);return(ABSTRACT);
@@ -98,7 +94,6 @@ NO_NUM \\([0-9A-Za-z]+)
 {HEXADECIMAL} printf("Linea %d - Constante Entera Hexadecimal: %s\n", linea, yytext);return(CTC_INT);
 {REALES} printf("Linea %d - Constante Real: %s\n", linea, yytext);return(CTC_FLOAT);
 {EXPONENTES} printf("Linea %d - Constante Real Exponente: %s\n", linea, yytext);return(CTC_FLOAT);
-
 {BITS} printf("Linea %d - Operador de bits: %s\n",linea,yytext);return(yytext[0]);
 {ARITMETICOS} printf("Linea %d - Operador aritmetico: %s\n",linea,yytext);return(yytext[0]);
 {RELACIONALES} printf("Linea %d - Operador relacional: %s\n",linea,yytext);return(yytext[0]);
@@ -122,7 +117,7 @@ NO_NUM \\([0-9A-Za-z]+)
 <CADENA>\"	BEGIN 0;strcat(cadena, yytext); printf("Linea %d - Constante Cadena: %s\n", linea-i, cadena);i=0;strcpy(cadena,"");
 <CADENA>{CTE_CADENA}		strcat(cadena,yytext);return(CTC_CADENA);
 
-({NO_IDENT}|{NO_CHAR}|{NO_NUM}|.) printf ("Linea %d - Error: %s\n",linea,yytext);
+. printf ("Linea %d - Error: %s\n",linea,yytext);
 
 %%
 
